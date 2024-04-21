@@ -1,4 +1,6 @@
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+const INJECTED_TEXT_DATE_VAR = "{{DATE}}"
+const INJECTED_TEXT_PATTERN = `, ${INJECTED_TEXT_DATE_VAR}, `
 
 const PHRASES = [
   {
@@ -8,7 +10,15 @@ const PHRASES = [
   {
     pattern: ['last', DAY_NAMES],
     offset: (now, matchParts) => now.setDate(now.getDate() - (7 - ((7 - now.getDay()) % 7 + DAY_NAMES.indexOf(matchParts[matchParts.length - 1])) % 7))
-  } 
+  },
+  {
+    pattern: [DAY_NAMES],
+    offset: (now, matchParts) => now.setDate(now.getDate() + ((7 - now.getDay()) % 7 + DAY_NAMES.indexOf(matchParts[0])) % 7)
+  },
+  {
+    pattern: ['tomorrow'],
+    offset: (now) => now.setDate(now.getDate() + 1)
+  }
 ]
 
 const FORMATTER = date => {
@@ -17,7 +27,7 @@ const FORMATTER = date => {
 }
 
 const camlog = (...args) => {
-  console.log('cameron whispers: ', ...args)
+  console.log('cameron whispers:', ...args)
 }
 
 const addEventListener = (element, type, listener) => {
@@ -68,6 +78,15 @@ const inputKeyUpListener = (e) => {
   const currentRange = window.getSelection().getRangeAt(0)
   const target = currentRange.commonAncestorContainer
 
+  const keyCode = e.keyCode
+  if(keyCode >= 65 && keyCode <= 90){
+    // letter
+  }else if(keyCode >=48 && keyCode <= 57){
+    // number
+  }else{
+    return
+  }
+
   switch(e.keyCode){
     case 13: // enter
     case 8: // backspace
@@ -97,7 +116,8 @@ const inputKeyUpListener = (e) => {
     return;
   }
   camlog('match is', match)
-  const textAddition = `, ${FORMATTER(match)}`
+  const formatted = FORMATTER(match)
+  const textAddition = INJECTED_TEXT_PATTERN.replace(INJECTED_TEXT_DATE_VAR, formatted)
 
   switch(target.nodeName.toLowerCase()){
     case 'input': 
@@ -107,6 +127,7 @@ const inputKeyUpListener = (e) => {
     default:
       const selection = window.getSelection()
       const range = selection.getRangeAt(0)
+      range.insertNode(document.createTextNode(" "))
       range.insertNode(document.createTextNode(textAddition))
       selection.modify("move", "right", "character")
       break
